@@ -16,7 +16,6 @@
  */
 
 import { EventEmitter } from 'eventemitter3';
-import * as Sentry from '@sentry/minimal';
 import { config, Hosts } from '../config';
 import { FilestackError } from './../filestack_error';
 import { metadata, MetadataOptions, remove, retrieve, RetrieveOptions, download } from './api/file';
@@ -31,9 +30,6 @@ import { FsResponse } from './request/types';
 import { StoreParams } from './filelink';
 
 import { picker, PickerInstance, PickerOptions } from './picker';
-
-/* istanbul ignore next */
-Sentry.addBreadcrumb({ category: 'sdk', message: 'filestack-js-sdk scope' });
 
 export interface Session {
   apikey: string;
@@ -460,18 +456,6 @@ export class Client extends EventEmitter {
     upload.on('start', () => this.emit('upload.start'));
     /* istanbul ignore next */
     upload.on('error', e => {
-      if (this.forwardErrors) {
-        Sentry.withScope(scope => {
-          scope.setTag('filestack-apikey', this.session.apikey);
-          scope.setTag('filestack-version', Utils.getVersion());
-          scope.setExtra('filestack-options', this.options);
-          scope.setExtras({ uploadOptions: options, storeOptions, details: e.details });
-          e.message = `FS-${e.message}`;
-
-          Sentry.captureException(e);
-        });
-      }
-
       this.emit('upload.error', e);
     });
 
@@ -526,15 +510,6 @@ export class Client extends EventEmitter {
     upload.on('start', () => this.emit('upload.start'));
     /* istanbul ignore next */
     upload.on('error', e => {
-      Sentry.withScope(scope => {
-        scope.setTag('filestack-apikey', this.session.apikey);
-        scope.setTag('filestack-version', Utils.getVersion());
-        scope.setExtra('filestack-options', this.options);
-        scope.setExtras(e.details);
-        scope.setExtras({ uploadOptions: options, storeOptions });
-        Sentry.captureException(e);
-      });
-
       this.emit('upload.error', e);
     });
 
